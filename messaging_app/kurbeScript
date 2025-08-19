@@ -1,0 +1,19 @@
+#!/bin/bash
+# kurbeScript: Start Kubernetes cluster, verify status, and list pods
+
+echo "=== Step 1: Starting Minikube (Kubernetes cluster) ==="
+minikube start --driver=docker
+if [ $? -ne 0 ]; then
+  echo "❌ Failed to start Minikube. Please check if Minikube is installed."
+  exit 1
+fi
+
+echo "=== Step 2: Verifying Kubernetes cluster status ==="
+kubectl cluster-info
+if [ $? -ne 0 ]; then
+  echo "❌ kubectl could not connect to the cluster."
+  exit 1
+fi
+
+echo "=== Step 3: Retrieving available pods ==="
+kubectl get pods --all-namespaces
