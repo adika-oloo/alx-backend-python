@@ -1,0 +1,44 @@
+# Enhanced version with more details
+class EnhancedRequestLoggingMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Record start time for response time calculation
+        start_time = datetime.now()
+        
+        response = self.get_response(request)
+        
+        # Calculate response time
+        response_time = datetime.now() - start_time
+        
+        self.log_request(request, response, response_time)
+        
+        return response
+
+    def log_request(self, request, response, response_time):
+        """Log the request with additional details"""
+        user = "AnonymousUser"
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            user = f"{request.user.username} (ID: {request.user.id})"
+        
+        log_entry = (
+            f"{datetime.now()} - "
+            f"User: {user} - "
+            f"Path: {request.path} - "
+            f"Method: {request.method} - "
+            f"Status: {response.status_code} - "
+            f"Response Time: {response_time.total_seconds():.3f}s\n"
+        )
+        
+        # Ensure logs directory exists
+        logs_dir = os.path.join(settings.BASE_DIR, 'logs')
+        if not os.path.exists(logs_dir):
+            os.makedirs(logs_dir)
+        
+        # Write to file
+        log_file = os.path.join(logs_dir, 'requests.log')
+        with open(log_file, 'a') as f:
+            f.write(log_entry)
+        
+        print(log_entry.strip())
