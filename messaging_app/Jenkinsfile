@@ -1,0 +1,61 @@
+pipeline {
+    agent any
+    
+    environment {
+        PROJECT_DIR = 'messaging_app'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                git(
+                    url: 'https://github.com/alx-backend-python.git',
+                    credentialsId: 'github-credentials',
+                    branch: 'main'
+                )
+            }
+        }
+        
+        stage('Setup Environment') {
+            steps {
+                sh '''
+                    cd ${PROJECT_DIR}
+                    python3 --version
+                    pip3 --version
+                    pip3 install -r requirements.txt
+                    pip3 install pytest pytest-html
+                '''
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                sh '''
+                    cd ${PROJECT_DIR}
+                    python3 -m pytest tests/ \
+                        --html=test-report.html \
+                        --self-contained-html \
+                        -v
+                '''
+            }
+            post {
+                always {
+                    publishHTML(target: [
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: "${PROJECT_DIR}",
+                        reportFiles: 'test-report.html',
+                        reportName: 'Test Results'
+                    ])
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo "Messaging App Pipeline completed"
+        }
+    }
+}
