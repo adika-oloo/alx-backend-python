@@ -1,27 +1,27 @@
 from datetime import datetime
+from django.http import HttpResponseForbidden
 
-class RequestLoggingMiddleware:
+
+class RestrictAccessByTimeMiddleware:
+    """
+    Middleware that restricts access to the chat app
+    between 6 AM and 9 PM. Outside these hours, it
+    returns a 403 Forbidden response.
+    """
+
     def __init__(self, get_response):
         self.get_response = get_response
-    
+
     def __call__(self, request):
-        # Get user information
-        user = "Anonymous"
-        if hasattr(request, 'user') and request.user.is_authenticated:
-            user = request.user.username
-        
-        # Create log entry
-        log_entry = f"{datetime.now()} - User: {user} - Path: {request.path}\n"
-        
-        # Write to log file
-        try:
-            with open('requests.log', 'a') as log_file:
-                log_file.write(log_entry)
-        except Exception as e:
-            # Print error if logging fails (for debugging)
-            print(f"Error writing to log file: {e}")
-        
-        # Process the request
-        response = self.get_response(request)
-        
-        return response
+        # Get current server hour (0–23)
+        current_hour = datetime.now().hour
+
+        # Allow only between 6 AM (06) and 9 PM (21)
+        if current_hour < 6 or current_hour >= 21:
+            return HttpResponseForbidden(
+                "Access to the chat is restricted between 9 PM and 6 AM."
+            )
+
+        # Otherwise continue request
+        return self.get_response(request)
+
