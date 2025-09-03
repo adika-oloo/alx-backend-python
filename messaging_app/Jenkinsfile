@@ -4,13 +4,12 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                // Checkout code from GitHub using credentials
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '*/main']],
                     extensions: [],
                     userRemoteConfigs: [[
-                        credentialsId: 'github-creds', // Your GitHub credentials ID
+                        credentialsId: 'github-creds',
                         url: 'https://github.com/alx-backend-python/messaging_app.git'
                     ]]
                 ])
@@ -25,7 +24,7 @@ pipeline {
 
         stage('Run Tests with pytest') {
             steps {
-                sh 'pytest --junitxml=test-results/results.xml'
+                sh 'pytest --junitxml=test-results/results.xml -v'
             }
             post {
                 always {
@@ -41,3 +40,4 @@ pipeline {
         }
     }
 }
+EOF
