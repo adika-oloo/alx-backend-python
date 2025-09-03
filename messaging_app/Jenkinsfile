@@ -1,62 +1,43 @@
 pipeline {
     agent any
 
-    environment {
-        // Define Python virtual environment path
-        VENV_DIR = "${WORKSPACE}/venv"
-    }
-
     stages {
         stage('Checkout Code') {
             steps {
                 // Checkout code from GitHub using credentials
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '*/main']], // Adjust branch as needed
+                    branches: [[name: '*/main']],
                     extensions: [],
                     userRemoteConfigs: [[
-                        credentialsId: 'github-ssh-key', // Use the credential ID you created
-                        url: 'git@github.com:alx-backend-python/messaging_app.git' // SSH URL; use HTTPS URL if using username/password
+                        credentialsId: 'github-creds', // Your GitHub credentials ID
+                        url: 'https://github.com/alx-backend-python/messaging_app.git'
                     ]]
                 ])
             }
         }
 
-        stage('Set Up Python Environment') {
-            steps {
-                // Create virtual environment using ShiningPanda
-                sh """
-                    python3 -m venv ${VENV_DIR}
-                """
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
-                // Install dependencies from requirements.txt
-                sh """
-                    ${VENV_DIR}/bin/pip install -r requirements.txt
-                """
+                sh 'pip install -r requirements.txt'
             }
         }
 
         stage('Run Tests with pytest') {
             steps {
-                // Run tests and generate JUnit XML report
-                sh """
-                    ${VENV_DIR}/bin/pytest --junitxml=${WORKSPACE}/test-reports/results.xml
-                """
+                sh 'pytest --junitxml=test-results/results.xml'
+            }
+            post {
+                always {
+                    junit 'test-results/results.xml'
+                }
             }
         }
     }
 
     post {
         always {
-            // Publish JUnit test results
-            junit "${WORKSPACE}/test-reports/results.xml"
-
-            // Clean up virtual environment (optional)
-            sh "rm -rf ${VENV_DIR}"
+            echo 'Pipeline completed - check test results'
         }
     }
 }
