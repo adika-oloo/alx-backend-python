@@ -10,8 +10,8 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/your-username/alx-backend-python.git',
-                    credentialsId: 'github-credentials'
+                    url: 'https://github.com/adika-oloo/alx-backend-python.git',
+                    credentialsId: 'adika-oloo'
                 dir('messaging_app') {
                     sh 'pwd && ls -la'
                 }
