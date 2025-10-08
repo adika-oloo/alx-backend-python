@@ -41,24 +41,3 @@ class RestrictAccessByTimeMiddleware:
         
         # Check if the path starts with any of the chat-related paths
         return any(path.startswith(chat_path) for chat_path in chat_paths)
-
-# Keep your existing logging middleware
-class RequestLoggingMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-        
-    def __call__(self, request):
-        timestamp = now()
-        
-        if request.user.is_authenticated:
-            user = request.user.username
-        else:
-            user = 'AnonymousUser'
-        
-        log_entry = f"{timestamp} - User: {user} - Path: {request.path}\n"
-        
-        with open('requests.log', 'a') as f:
-            f.write(log_entry)
-        
-        response = self.get_response(request)
-        return response
