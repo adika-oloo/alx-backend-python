@@ -2,8 +2,8 @@ import logging
 from datetime import datetime, time
 from django.http import JsonResponse
 
-# Logger for request logs
-logger = logging.getLogger('request_logger')
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 class RequestLoggingMiddleware:
@@ -14,17 +14,18 @@ class RequestLoggingMiddleware:
         user = request.user if request.user.is_authenticated else 'Anonymous'
         log_message = f"{datetime.now()} - User: {user} - Path: {request.path}"
         logger.info(log_message)
+        with open("requests.log", "a") as log_file:
+            log_file.write(log_message + "\n")
         response = self.get_response(request)
         return response
 
 
 class RestrictAccessByTimeMiddleware:
     """
-    Middleware to restrict access outside of allowed hours (e.g., 8 AM - 6 PM)
+    Middleware that restricts access outside of allowed hours.
     """
     def __init__(self, get_response):
         self.get_response = get_response
-        # Define working hours (you can customize this)
         self.start_time = time(8, 0, 0)   # 8:00 AM
         self.end_time = time(18, 0, 0)    # 6:00 PM
 
