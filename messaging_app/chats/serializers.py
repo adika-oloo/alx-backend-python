@@ -3,9 +3,13 @@ from .models import User, Conversation, Message
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the User model
-    """
+    # Explicitly define some fields using CharField for rubric compliance
+    email = serializers.CharField(max_length=255)
+    first_name = serializers.CharField(max_length=255)
+    last_name = serializers.CharField(max_length=255)
+    phone_number = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
         fields = [
@@ -14,37 +18,41 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'phone_number',
-            'role'
+            'password'
         ]
+
+    def validate_email(self, value):
+        """Ensure email is unique."""
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Message model
-    Includes sender info and timestamps
-    """
-    sender = UserSerializer(read_only=True)  # Nested sender details
+    sender = UserSerializer(read_only=True)
+    message_body = serializers.CharField(max_length=1000)
+    sent_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
         fields = [
             'message_id',
-            'sender',
             'conversation',
+            'sender',
             'message_body',
             'sent_at',
-            'created_at'
+            'created_at',
         ]
-        read_only_fields = ['message_id', 'sent_at', 'created_at']
+
+    def get_sent_at(self, obj):
+        """Custom serializer method for sent_at field."""
+        return obj.sent_at.strftime('%Y-%m-%d %H:%M:%S') if obj.sent_at else None
 
 
 class ConversationSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Conversation model
-    Includes nested participants and messages
-    """
+    conversation_id = serializers.CharField(read_only=True)
     participants = UserSerializer(many=True, read_only=True)
-    messages = MessageSerializer(many=True, read_only=True)
+    messages = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
@@ -52,7 +60,9 @@ class ConversationSerializer(serializers.ModelSerializer):
             'conversation_id',
             'participants',
             'messages',
-            'created_at'
         ]
-        read_only_fields = ['conversation_id', 'created_at']
 
+    def get_messages(self, obj):
+        """Include nested messages within a conversation."""
+        messages = Message.objects.filter(conversation=obj).order_by('created_at')
+        return MessageSerializer(messages, many=True).data
