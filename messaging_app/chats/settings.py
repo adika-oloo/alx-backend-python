@@ -90,18 +90,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ✅ Django REST Framework Configuration
 REST_FRAMEWORK = {
-    # --- Authentication Classes ---
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-
-    # --- Global Permission Classes ---
-    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
         'chats.permissions.IsParticipantOfConversation',
-    ),
+    ],
 }
 
 # ✅ JWT Authentication Settings
