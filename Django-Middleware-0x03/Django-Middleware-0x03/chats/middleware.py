@@ -1,43 +1,38 @@
-import datetime
-from django.http import HttpResponseForbidden
-from django.utils.timezone import now
+import logging
+from datetime import datetime, time
+from django.http import JsonResponse
 
-class RestrictAccessByTimeMiddleware:
+# Logger for request logs
+logger = logging.getLogger('request_logger')
+
+
+class RequestLoggingMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        
+
     def __call__(self, request):
-        # Get current server time
-        current_time = now()
-        current_hour = current_time.hour
-        
-        # Define restricted hours (9 PM to 6 AM)
-        # 21 = 9 PM, 6 = 6 AM
-        is_restricted_time = current_hour >= 21 or current_hour < 6
-        
-        # Check if the request is for chat-related paths during restricted hours
-        if is_restricted_time and self.is_chat_path(request.path):
-            return HttpResponseForbidden(
-                "Access to messaging services is restricted between 9 PM and 6 AM. "
-                "Please try again during business hours."
-            )
-        
-        # Process the request if not restricted
+        user = request.user if request.user.is_authenticated else 'Anonymous'
+        log_message = f"{datetime.now()} - User: {user} - Path: {request.path}"
+        logger.info(log_message)
         response = self.get_response(request)
         return response
-    
-    def is_chat_path(self, path):
-        """
-        Check if the request path is related to chat/messaging functionality
-        """
-        chat_paths = [
-            '/chats/',
-            '/messages/',
-            '/api/chats/',
-            '/api/messages/',
-            '/chat/',
-            '/messaging/',
-        ]
-        
-        # Check if the path starts with any of the chat-related paths
-        return any(path.startswith(chat_path) for chat_path in chat_paths)
+
+
+class RestrictAccessByTimeMiddleware:
+    """
+    Middleware to restrict access outside of allowed hours (e.g., 8 AM - 6 PM)
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+        # Define working hours (you can customize this)
+        self.start_time = time(8, 0, 0)   # 8:00 AM
+        self.end_time = time(18, 0, 0)    # 6:00 PM
+
+    def __call__(self, request):
+        current_time = datetime.now().time()
+        if not (self.start_time <= current_time <= self.end_time):
+            return JsonResponse(
+                {"detail": "Access restricted. Please try again during working hours (8 AM - 6 PM)."},
+                status=403
+            )
+        return self.get_response(request)
