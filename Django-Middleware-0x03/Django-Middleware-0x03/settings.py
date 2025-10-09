@@ -27,7 +27,6 @@ INSTALLED_APPS = [
     'django_filters',
     'chats',
 ]
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
