@@ -32,8 +32,9 @@ MIDDLEWARE = [
     # Custom middlewares
     'chats.middleware.RestrictAccessByTimeMiddleware',
     'chats.middleware.OffensiveLanguageMiddleware',
-    'chats.middleware.RolePermissionMiddleware',   # ✅ add this line
+    'chats.middleware.RolepermissionMiddleware',
 ]
+
 
 
 
